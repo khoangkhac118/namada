@@ -358,7 +358,9 @@ mod test_bridge_pool_vp {
     use crate::proto::Data;
     use crate::types::address::{nam, wnam};
     use crate::types::chain::ChainId;
-    use crate::types::eth_bridge_pool::{GasFee, TransferToEthereum};
+    use crate::types::eth_bridge_pool::{
+        GasFee, TransferToEthereum, TransferToEthereumKind,
+    };
     use crate::types::hash::Hash;
     use crate::types::storage::TxIndex;
     use crate::types::transaction::TxType;
@@ -407,6 +409,7 @@ mod test_bridge_pool_vp {
     fn initial_pool() -> PendingTransfer {
         PendingTransfer {
             transfer: TransferToEthereum {
+                kind: TransferToEthereumKind::Erc20,
                 asset: ASSET,
                 sender: bertha_address(),
                 recipient: EthAddress([0; 20]),
@@ -571,6 +574,7 @@ mod test_bridge_pool_vp {
         // the transfer to be added to the pool
         let transfer = PendingTransfer {
             transfer: TransferToEthereum {
+                kind: TransferToEthereumKind::Erc20,
                 asset: ASSET,
                 sender: bertha_address(),
                 recipient: EthAddress([1; 20]),
@@ -827,6 +831,7 @@ mod test_bridge_pool_vp {
             |transfer, log| {
                 let t = PendingTransfer {
                     transfer: TransferToEthereum {
+                        kind: TransferToEthereumKind::Erc20,
                         asset: EthAddress([0; 20]),
                         sender: bertha_address(),
                         recipient: EthAddress([11; 20]),
@@ -857,6 +862,7 @@ mod test_bridge_pool_vp {
             |transfer, log| {
                 let t = PendingTransfer {
                     transfer: TransferToEthereum {
+                        kind: TransferToEthereumKind::Erc20,
                         asset: EthAddress([0; 20]),
                         sender: bertha_address(),
                         recipient: EthAddress([11; 20]),
@@ -978,6 +984,7 @@ mod test_bridge_pool_vp {
         // the transfer to be added to the pool
         let transfer = PendingTransfer {
             transfer: TransferToEthereum {
+                kind: TransferToEthereumKind::Erc20,
                 asset: ASSET,
                 sender: bertha_address(),
                 recipient: EthAddress([1; 20]),
@@ -1044,6 +1051,7 @@ mod test_bridge_pool_vp {
         // the transfer to be added to the pool
         let transfer = PendingTransfer {
             transfer: TransferToEthereum {
+                kind: TransferToEthereumKind::Erc20,
                 asset: wnam(),
                 sender: bertha_address(),
                 recipient: EthAddress([1; 20]),
@@ -1131,6 +1139,7 @@ mod test_bridge_pool_vp {
         // the transfer to be added to the pool
         let transfer = PendingTransfer {
             transfer: TransferToEthereum {
+                kind: TransferToEthereumKind::Erc20,
                 asset: wnam(),
                 sender: bertha_address(),
                 recipient: EthAddress([1; 20]),
@@ -1237,6 +1246,7 @@ mod test_bridge_pool_vp {
         // the transfer to be added to the pool
         let transfer = PendingTransfer {
             transfer: TransferToEthereum {
+                kind: TransferToEthereumKind::Erc20,
                 asset: wnam(),
                 sender: bertha_address(),
                 recipient: EthAddress([1; 20]),
