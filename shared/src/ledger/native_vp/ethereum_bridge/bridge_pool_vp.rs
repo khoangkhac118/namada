@@ -518,6 +518,8 @@ mod test_bridge_pool_vp {
 
     /// A set of balances for an address
     struct Balance {
+        /// The address of the Ethereum asset.
+        asset: EthAddress,
         /// NUT or ERC20 Ethereum asset kind.
         kind: TransferToEthereumKind,
         /// The owner of the ERC20 assets.
@@ -533,6 +535,7 @@ mod test_bridge_pool_vp {
         fn new(kind: TransferToEthereumKind, address: Address) -> Self {
             Self {
                 kind,
+                asset: ASSET,
                 owner: address,
                 gas: 0.into(),
                 token: 0.into(),
@@ -655,8 +658,12 @@ mod test_bridge_pool_vp {
         // get the balance keys
         let token_key = balance_key(
             &match balance.kind {
-                TransferToEthereumKind::Erc20 => wrapped_erc20s::token(&ASSET),
-                TransferToEthereumKind::Nut => wrapped_erc20s::nut(&ASSET),
+                TransferToEthereumKind::Erc20 => {
+                    wrapped_erc20s::token(&balance.asset)
+                }
+                TransferToEthereumKind::Nut => {
+                    wrapped_erc20s::nut(&balance.asset)
+                }
             },
             &balance.owner,
         );
@@ -791,6 +798,7 @@ mod test_bridge_pool_vp {
         let mut new_keys_changed = update_balances(
             &mut wl_storage.write_log,
             Balance {
+                asset: transfer.transfer.asset,
                 kind: TransferToEthereumKind::Erc20,
                 owner: bertha_address(),
                 gas: BERTHA_WEALTH.into(),
@@ -805,6 +813,7 @@ mod test_bridge_pool_vp {
         let mut new_keys_changed = update_balances(
             &mut wl_storage.write_log,
             Balance {
+                asset: transfer.transfer.asset,
                 kind: TransferToEthereumKind::Erc20,
                 owner: BRIDGE_POOL_ADDRESS,
                 gas: ESCROWED_AMOUNT.into(),
@@ -1132,6 +1141,7 @@ mod test_bridge_pool_vp {
         let mut new_keys_changed = update_balances(
             &mut wl_storage.write_log,
             Balance {
+                asset: ASSET,
                 kind: TransferToEthereumKind::Erc20,
                 owner: bertha_address(),
                 gas: BERTHA_WEALTH.into(),
@@ -1146,6 +1156,7 @@ mod test_bridge_pool_vp {
         let mut new_keys_changed = update_balances(
             &mut wl_storage.write_log,
             Balance {
+                asset: ASSET,
                 kind: TransferToEthereumKind::Erc20,
                 owner: BRIDGE_POOL_ADDRESS,
                 gas: ESCROWED_AMOUNT.into(),
@@ -1569,6 +1580,7 @@ mod test_bridge_pool_vp {
             &mut wl_storage.write_log,
             Balance {
                 kind,
+                asset: ASSET,
                 owner: daewon_address(),
                 gas: DAEWONS_GAS.into(),
                 token: DAES_NUTS.into(),
@@ -1583,6 +1595,7 @@ mod test_bridge_pool_vp {
             &mut wl_storage.write_log,
             Balance {
                 kind,
+                asset: ASSET,
                 owner: BRIDGE_POOL_ADDRESS,
                 gas: ESCROWED_AMOUNT.into(),
                 token: ESCROWED_NUTS.into(),
