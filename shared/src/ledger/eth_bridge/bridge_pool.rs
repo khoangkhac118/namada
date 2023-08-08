@@ -58,6 +58,7 @@ pub async fn build_bridge_pool_tx<
         amount,
         gas_amount,
         gas_payer,
+        gas_token,
         code_path: wasm_code,
     } = args;
     let DenominatedAmount { amount, .. } =
@@ -77,8 +78,7 @@ pub async fn build_bridge_pool_tx<
             },
         },
         gas_fee: GasFee {
-            // TODO: plug value obtained from `args` here
-            token: namada_core::types::address::nam(),
+            token: gas_token,
             amount: gas_amount,
             payer: gas_payer,
         },
