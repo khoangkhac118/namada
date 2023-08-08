@@ -2350,7 +2350,8 @@ pub mod args {
                 denom: NATIVE_MAX_DECIMAL_PLACES.into(),
             }),
         );
-    pub const BRIDGE_POOL_GAS_PAYER: Arg<WalletAddress> = arg("pool-gas-payer");
+    pub const BRIDGE_POOL_GAS_PAYER: ArgOpt<WalletAddress> =
+        arg_opt("pool-gas-payer");
     pub const BRIDGE_POOL_GAS_TOKEN: ArgDefaultFromCtx<WalletAddress> =
         arg_default_from_ctx(
             "pool-gas-token",
@@ -2711,7 +2712,7 @@ pub mod args {
                 sender: ctx.get(&self.sender),
                 amount: self.amount,
                 gas_amount: self.gas_amount,
-                gas_payer: ctx.get(&self.gas_payer),
+                gas_payer: self.gas_payer.map(|gas_payer| ctx.get(&gas_payer)),
                 gas_token: ctx.get(&self.gas_token),
                 code_path: ctx.read_wasm(self.code_path),
             }
@@ -2768,11 +2769,10 @@ pub mod args {
                     "The amount of gas you wish to pay to have this transfer \
                      relayed to Ethereum.",
                 ))
-                .arg(
-                    BRIDGE_POOL_GAS_PAYER.def().help(
-                        "The Namada address of the account paying the gas.",
-                    ),
-                )
+                .arg(BRIDGE_POOL_GAS_PAYER.def().help(
+                    "The Namada address of the account paying the gas. By \
+                     default, it is the same as the source.",
+                ))
                 .arg(BRIDGE_POOL_GAS_TOKEN.def().help(
                     "The token for paying the Bridge pool gas fees. Defaults \
                      to NAM.",

@@ -61,6 +61,7 @@ pub async fn build_bridge_pool_tx<
         gas_token,
         code_path: wasm_code,
     } = args;
+    let gas_payer = gas_payer.unwrap_or_else(|| sender.clone());
     let DenominatedAmount { amount, .. } =
         validate_amount(client, amount, &BRIDGE_ADDRESS, tx.force)
             .await
