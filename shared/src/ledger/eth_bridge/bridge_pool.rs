@@ -77,6 +77,8 @@ pub async fn build_bridge_pool_tx<
             },
         },
         gas_fee: GasFee {
+            // TODO: plug value obtained from `args` here
+            token: namada_core::types::address::nam(),
             amount: gas_amount,
             payer: gas_payer,
         },
@@ -707,6 +709,7 @@ mod recommendations {
                     amount: Default::default(),
                 },
                 gas_fee: GasFee {
+                    token: namada_core::types::address::nam(),
                     amount: gas_amount.into(),
                     payer: bertha_address(),
                 },
