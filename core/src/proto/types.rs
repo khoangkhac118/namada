@@ -1729,8 +1729,15 @@ impl Tx {
         keypairs: Vec<common::SecretKey>,
         account_public_keys_map: AccountPublicKeysMap,
     ) -> &mut Self {
+        // The inner tx signer signs the Raw version of the Header
+        let mut header = self.header();
+        header.tx_type = TxType::Raw;
+
+        let mut hashes = vec![Section::Header(header).get_hash()];
         self.protocol_filter();
-        let hashes = self.inner_section_targets();
+        let section_hashes = self.inner_section_targets();
+        hashes.extend(sections_hashes);
+
         self.add_section(Section::SectionSignature(MultiSignature::new(
             hashes,
             &keypairs,
