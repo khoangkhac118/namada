@@ -886,8 +886,7 @@ where
         tx_bytes: &[u8],
         temp_wl_storage: &mut TempWlStorage<D, H>,
     ) -> Result<()> {
-        let inner_tx_hash =
-            wrapper.clone().update_header(TxType::Raw).header_hash();
+        let inner_tx_hash = wrapper.raw_header_hash();
         let inner_hash_key =
             replay_protection::get_replay_protection_key(&inner_tx_hash);
         if temp_wl_storage
@@ -1044,22 +1043,19 @@ where
             }
         };
 
-        let tx_chain_id = tx.header.chain_id.clone();
-        let tx_expiration = tx.header.expiration;
-
         // Tx chain id
-        if tx_chain_id != self.chain_id {
+        if tx.header.chain_id != self.chain_id {
             response.code = ErrorCodes::InvalidChainId.into();
             response.log = format!(
                 "{INVALID_MSG}: Tx carries a wrong chain id: expected {}, \
                  found {}",
-                self.chain_id, tx_chain_id
+                self.chain_id, tx.header.chain_id
             );
             return response;
         }
 
         // Tx expiration
-        if let Some(exp) = tx_expiration {
+        if let Some(exp) = tx.header.expiration {
             let last_block_timestamp = self.get_block_timestamp(None);
 
             if last_block_timestamp > exp {
@@ -1218,9 +1214,7 @@ where
                 }
 
                 // Replay protection check
-                let mut inner_tx = tx;
-                inner_tx.update_header(TxType::Raw);
-                let inner_tx_hash = &inner_tx.header_hash();
+                let inner_tx_hash = tx.raw_header_hash();
                 let inner_hash_key =
                     replay_protection::get_replay_protection_key(inner_tx_hash);
                 if self
@@ -2494,8 +2488,7 @@ mod test_mempool_validate {
             )
         );
 
-        let inner_tx_hash =
-            wrapper.clone().update_header(TxType::Raw).header_hash();
+        let inner_tx_hash = wrapper.raw_header_hash();
         // Write inner hash in storage
         let inner_hash_key =
             replay_protection::get_replay_protection_key(&inner_tx_hash);

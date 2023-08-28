@@ -1306,8 +1306,7 @@ mod test_prepare_proposal {
             wrapper.sechashes(),
             &keypair,
         )));
-        let inner_unsigned_hash =
-            wrapper.clone().update_header(TxType::Raw).header_hash();
+        let inner_unsigned_hash = wrapper.raw_header_hash();
 
         // Write inner hash to storage
         let hash_key =
