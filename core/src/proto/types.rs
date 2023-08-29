@@ -1475,7 +1475,8 @@ impl Tx {
         secret_keys: &[common::SecretKey],
         public_keys_index_map: &AccountPublicKeysMap,
     ) -> BTreeSet<SignatureIndex> {
-        let targets = self.inner_section_targets();
+        let mut targets = vec![self.header_hash()];
+        targets.extend(self.inner_section_targets());
         MultiSignature::new(targets, secret_keys, public_keys_index_map)
             .signatures
     }
