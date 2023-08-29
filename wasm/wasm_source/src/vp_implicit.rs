@@ -536,7 +536,7 @@ mod tests {
         tx.set_data(Data::new(vec![]));
         tx.set_code(Code::new(vec![]));
         tx.add_section(Section::SectionSignature(MultiSignature::new(
-            vec![*tx.data_sechash(), *tx.code_sechash()],
+            vec![tx.raw_header_hash(), *tx.data_sechash(), *tx.code_sechash()],
             &[secret_key],
             &pks_map,
         )));
@@ -672,7 +672,7 @@ mod tests {
         tx.set_data(Data::new(vec![]));
         tx.set_code(Code::new(vec![]));
         tx.add_section(Section::SectionSignature(MultiSignature::new(
-            vec![*tx.data_sechash(), *tx.code_sechash()],
+            vec![tx.raw_header_hash(), *tx.data_sechash(), *tx.code_sechash()],
             &[secret_key],
             &pks_map,
         )));
@@ -988,7 +988,7 @@ mod tests {
         tx.set_code(Code::new(vec![]));
         tx.set_data(Data::new(vec![]));
         tx.add_section(Section::SectionSignature(MultiSignature::new(
-            vec![*tx.data_sechash(), *tx.code_sechash()],
+            vec![tx.raw_header_hash(), *tx.data_sechash(), *tx.code_sechash()],
             &[secret_key],
             &pks_map,
         )));
