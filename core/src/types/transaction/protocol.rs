@@ -334,11 +334,7 @@ mod protocol_txs {
                     .expect("Serializing request should not fail"),
             ));
             outer_tx.add_section(Section::Signature(Signature::new(
-                vec![
-                    outer_tx.header_hash(),
-                    *outer_tx.code_sechash(),
-                    *outer_tx.data_sechash(),
-                ],
+                vec![outer_tx.header_hash()],
                 signing_key,
             )));
             outer_tx

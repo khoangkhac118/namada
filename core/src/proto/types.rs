@@ -1475,8 +1475,7 @@ impl Tx {
         secret_keys: &[common::SecretKey],
         public_keys_index_map: &AccountPublicKeysMap,
     ) -> BTreeSet<SignatureIndex> {
-        let mut targets = vec![self.header_hash()];
-        targets.extend(self.inner_section_targets());
+        let targets = [self.header_hash()].to_vec();
         MultiSignature::new(targets, secret_keys, public_keys_index_map)
             .signatures
     }
@@ -1739,12 +1738,11 @@ impl Tx {
         account_public_keys_map: AccountPublicKeysMap,
     ) -> &mut Self {
         // The inner tx signer signs the Raw version of the Header
-        let mut hashes = vec![self.raw_header_hash()];
+        let hashes = vec![self.raw_header_hash()];
         self.protocol_filter();
-        let section_hashes = self.inner_section_targets();
-        hashes.extend(sections_hashes);
 
         self.add_section(Section::SectionSignature(MultiSignature::new(
+            // FIXME: does targets still need to be a Vec?
             hashes,
             &keypairs,
             &account_public_keys_map,

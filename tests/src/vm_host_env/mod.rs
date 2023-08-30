@@ -475,11 +475,7 @@ mod tests {
             assert!(
                 signed_tx_data
                     .verify_section_signatures(
-                        &[
-                            signed_tx_data.header_hash(),
-                            *signed_tx_data.data_sechash(),
-                            *signed_tx_data.code_sechash(),
-                        ],
+                        &[signed_tx_data.header_hash(),],
                         pks_map,
                         1,
                         None,
@@ -494,11 +490,7 @@ mod tests {
             assert!(
                 signed_tx_data
                     .verify_section_signatures(
-                        &[
-                            signed_tx_data.header_hash(),
-                            *signed_tx_data.data_sechash(),
-                            *signed_tx_data.code_sechash(),
-                        ],
+                        &[signed_tx_data.header_hash(),],
                         AccountPublicKeysMap::from_iter([
                             other_keypair.ref_to()
                         ]),
