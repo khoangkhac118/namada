@@ -267,7 +267,7 @@ mod tests {
         tx.set_data(Data::new(vec![]));
         tx.set_code(Code::new(vec![]));
         tx.add_section(Section::SectionSignature(MultiSignature::new(
-            vec![tx.raw_header_hash()],
+            tx.raw_header_hash(),
             &[keypair],
             &pks_map,
         )));
@@ -450,7 +450,7 @@ mod tests {
             tx.set_data(Data::new(vec![]));
             tx.set_code(Code::new(vec![]));
             tx.add_section(Section::SectionSignature(MultiSignature::new(
-                vec![tx.raw_header_hash()],
+                tx.raw_header_hash(),
                 &[keypair],
                 &pks_map,
             )));

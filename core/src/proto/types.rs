@@ -466,7 +466,7 @@ impl PartialOrd for SignatureIndex {
 )]
 pub struct MultiSignature {
     /// The hash of the section being signed
-    pub targets: Vec<crate::types::hash::Hash>,
+    pub target: crate::types::hash::Hash,
     /// The signature over the above hash
     pub signatures: BTreeSet<SignatureIndex>,
 }
@@ -474,19 +474,20 @@ pub struct MultiSignature {
 impl MultiSignature {
     /// Sign the given section hash with the given key and return a section
     pub fn new(
-        targets: Vec<crate::types::hash::Hash>,
+        target: crate::types::hash::Hash,
         secret_keys: &[common::SecretKey],
         public_keys_index_map: &AccountPublicKeysMap,
     ) -> Self {
-        let target = Self {
-            targets: targets.clone(),
+        let sign_target = Self {
+            target,
             signatures: BTreeSet::new(),
         }
         .get_hash();
 
         let signatures_public_keys_map =
             secret_keys.iter().map(|secret_key: &common::SecretKey| {
-                let signature = common::SigScheme::sign(secret_key, target);
+                let signature =
+                    common::SigScheme::sign(secret_key, sign_target);
                 let public_key = secret_key.ref_to();
                 (public_key, signature)
             });
@@ -500,10 +501,7 @@ impl MultiSignature {
             })
             .collect::<BTreeSet<SignatureIndex>>();
 
-        Self {
-            targets,
-            signatures,
-        }
+        Self { target, signatures }
     }
 
     pub fn total_signatures(&self) -> u8 {
@@ -1253,6 +1251,13 @@ impl Tx {
         if self.header_hash() == *hash {
             return Some(Cow::Owned(Section::Header(self.header.clone())));
         }
+        if self.raw_header_hash() == *hash {
+            // Raw transaction header for signature verification
+            let mut raw_header = self.header();
+            raw_header.tx_type = TxType::Raw;
+
+            return Some(Cow::Owned(Section::Header(raw_header)));
+        }
         for section in &self.sections {
             if section.get_hash() == *hash {
                 return Some(Cow::Borrowed(section));
@@ -1338,25 +1343,11 @@ impl Tx {
         bytes
     }
 
-    /// Get the inner section hashes
-    pub fn inner_section_targets(&self) -> Vec<crate::types::hash::Hash> {
-        let mut sections_hashes = self
-            .sections
-            .iter()
-            .filter_map(|section| match section {
-                Section::Data(_) | Section::Code(_) => Some(section.get_hash()),
-                _ => None,
-            })
-            .collect::<Vec<crate::types::hash::Hash>>();
-        sections_hashes.sort();
-        sections_hashes
-    }
-
     /// Verify that the section with the given hash has been signed by the given
     /// public key
     pub fn verify_section_signatures(
         &self,
-        hashes: &[crate::types::hash::Hash],
+        hash: &crate::types::hash::Hash,
         public_keys_index_map: AccountPublicKeysMap,
         threshold: u8,
         max_signatures: Option<u8>,
@@ -1367,20 +1358,17 @@ impl Tx {
 
         for section in &self.sections {
             if let Section::SectionSignature(signatures) = section {
-                if !hashes.iter().all(|x| {
-                    signatures.targets.contains(x) || section.get_hash() == *x
-                }) {
+                if !(&signatures.target == hash || &section.get_hash() == hash)
+                {
                     return Err(Error::InvalidSectionSignature(
                         "missing target hash.".to_string(),
                     ));
                 }
 
-                for target in &signatures.targets {
-                    if self.get_section(target).is_none() {
-                        return Err(Error::InvalidSectionSignature(
-                            "Missing target section.".to_string(),
-                        ));
-                    }
+                if self.get_section(&signatures.target).is_none() {
+                    return Err(Error::InvalidSectionSignature(
+                        "Missing target section.".to_string(),
+                    ));
                 }
 
                 if signatures.total_signatures() > max_signatures {
@@ -1475,9 +1463,12 @@ impl Tx {
         secret_keys: &[common::SecretKey],
         public_keys_index_map: &AccountPublicKeysMap,
     ) -> BTreeSet<SignatureIndex> {
-        let targets = [self.header_hash()].to_vec();
-        MultiSignature::new(targets, secret_keys, public_keys_index_map)
-            .signatures
+        MultiSignature::new(
+            self.header_hash(),
+            secret_keys,
+            public_keys_index_map,
+        )
+        .signatures
     }
 
     /// Decrypt any and all ciphertexts stored in this transaction use the
@@ -1737,13 +1728,11 @@ impl Tx {
         keypairs: Vec<common::SecretKey>,
         account_public_keys_map: AccountPublicKeysMap,
     ) -> &mut Self {
-        // The inner tx signer signs the Raw version of the Header
-        let hashes = vec![self.raw_header_hash()];
         self.protocol_filter();
 
         self.add_section(Section::SectionSignature(MultiSignature::new(
-            // FIXME: does targets still need to be a Vec?
-            hashes,
+            // The inner tx signers sign the Raw version of the Header
+            self.raw_header_hash(),
             &keypairs,
             &account_public_keys_map,
         )));
@@ -1757,7 +1746,8 @@ impl Tx {
     ) -> &mut Self {
         self.protocol_filter();
         self.add_section(Section::SectionSignature(MultiSignature {
-            targets: self.inner_section_targets(),
+            // The inner tx signers sign the Raw version of the Header
+            target: self.raw_header_hash(),
             signatures,
         }));
         self

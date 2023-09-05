@@ -25,6 +25,7 @@ use masp_primitives::zip32::ExtendedFullViewingKey;
 use masp_proofs::prover::LocalTxProver;
 use namada::core::ledger::governance::storage::proposal::ProposalType;
 use namada::core::ledger::ibc::storage::port_key;
+use namada::core::types::account::AccountPublicKeysMap;
 use namada::core::types::address::{self, Address};
 use namada::core::types::key::common::SecretKey;
 use namada::core::types::storage::Key;
@@ -187,7 +188,7 @@ impl Default for BenchShell {
             bond,
             None,
             None,
-            Some(&defaults::albert_keypair()),
+            Some(defaults::albert_keypair()),
         );
 
         let params =
@@ -215,7 +216,7 @@ impl Default for BenchShell {
             },
             None,
             Some(vec![content_section]),
-            Some(&defaults::albert_keypair()),
+            Some(defaults::albert_keypair()),
         );
 
         bench_shell.execute_tx(&signed_tx);
@@ -403,7 +404,7 @@ pub fn generate_tx(
     data: impl BorshSerialize,
     shielded: Option<Transaction>,
     extra_section: Option<Vec<Section>>,
-    signer: Option<&SecretKey>,
+    signer: Option<SecretKey>,
 ) -> Tx {
     let mut tx = Tx::from_type(namada::types::transaction::TxType::Decrypted(
         namada::types::transaction::DecryptedTx::Decrypted {
@@ -433,10 +434,14 @@ pub fn generate_tx(
     }
 
     if let Some(signer) = signer {
-        tx.add_section(Section::Signature(Signature::new(
-            tx.sechashes(),
-            signer,
-        )));
+        let keys_map = AccountPublicKeysMap::from_iter([signer.to_public()]);
+        tx.add_section(Section::SectionSignature(
+            namada::proto::MultiSignature::new(
+                tx.header_hash(),
+                &[signer],
+                &keys_map,
+            ),
+        ));
     }
 
     tx
@@ -817,7 +822,7 @@ impl BenchShieldedCtx {
             },
             shielded,
             None,
-            Some(&defaults::albert_keypair()),
+            Some(defaults::albert_keypair()),
         )
     }
 }

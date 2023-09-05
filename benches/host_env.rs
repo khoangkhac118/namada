@@ -1,10 +1,10 @@
-use borsh::BorshSerialize;
 use criterion::{criterion_group, criterion_main, Criterion};
 use namada::core::types::account::AccountPublicKeysMap;
 use namada::core::types::address;
 use namada::core::types::token::{Amount, Transfer};
-use namada::proto::{Data, MultiSignature, Section};
+use namada::proto::MultiSignature;
 use namada_apps::wallet::defaults;
+use namada_benches::{generate_tx, TX_TRANSFER_WASM};
 
 /// Benchmarks the validation of a single signature on a single `Section` of a
 /// transaction
@@ -17,15 +17,14 @@ fn tx_section_signature_validation(c: &mut Criterion) {
         key: None,
         shielded: None,
     };
-    let section = Section::Data(Data::new(transfer_data.try_to_vec().unwrap()));
-    let section_hash = section.get_hash();
+    let tx = generate_tx(TX_TRANSFER_WASM, transfer_data, None, None, None);
 
     let pkim = AccountPublicKeysMap::from_iter([
         defaults::albert_keypair().to_public()
     ]);
 
     let multisig = MultiSignature::new(
-        vec![section_hash],
+        tx.header_hash(),
         &[defaults::albert_keypair()],
         &pkim,
     );

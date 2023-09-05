@@ -128,7 +128,7 @@ fn bond(c: &mut Criterion) {
         },
         None,
         None,
-        Some(&defaults::albert_keypair()),
+        Some(defaults::albert_keypair()),
     );
 
     let self_bond = generate_tx(
@@ -140,7 +140,7 @@ fn bond(c: &mut Criterion) {
         },
         None,
         None,
-        Some(&defaults::validator_keypair()),
+        Some(defaults::validator_keypair()),
     );
 
     for (signed_tx, bench_name) in
@@ -170,7 +170,7 @@ fn unbond(c: &mut Criterion) {
         },
         None,
         None,
-        Some(&defaults::albert_keypair()),
+        Some(defaults::albert_keypair()),
     );
 
     let self_unbond = generate_tx(
@@ -182,7 +182,7 @@ fn unbond(c: &mut Criterion) {
         },
         None,
         None,
-        Some(&defaults::validator_keypair()),
+        Some(defaults::validator_keypair()),
     );
 
     for (signed_tx, bench_name) in
@@ -211,7 +211,7 @@ fn withdraw(c: &mut Criterion) {
         },
         None,
         None,
-        Some(&defaults::albert_keypair()),
+        Some(defaults::albert_keypair()),
     );
 
     let self_withdraw = generate_tx(
@@ -222,7 +222,7 @@ fn withdraw(c: &mut Criterion) {
         },
         None,
         None,
-        Some(&defaults::validator_keypair()),
+        Some(defaults::validator_keypair()),
     );
 
     for (signed_tx, bench_name) in [withdraw, self_withdraw]
@@ -245,7 +245,7 @@ fn withdraw(c: &mut Criterion) {
                             },
                             None,
                             None,
-                            Some(&defaults::albert_keypair()),
+                            Some(defaults::albert_keypair()),
                         ),
                         "self_withdraw" => generate_tx(
                             TX_UNBOND_WASM,
@@ -256,7 +256,7 @@ fn withdraw(c: &mut Criterion) {
                             },
                             None,
                             None,
-                            Some(&defaults::validator_keypair()),
+                            Some(defaults::validator_keypair()),
                         ),
                         _ => panic!("Unexpected bench test"),
                     };
@@ -332,7 +332,7 @@ fn update_vp(c: &mut Criterion) {
         data,
         None,
         Some(vec![extra_section]),
-        Some(&defaults::albert_keypair()),
+        Some(defaults::albert_keypair()),
     );
 
     c.bench_function("update_vp", |b| {
@@ -372,7 +372,7 @@ fn init_account(c: &mut Criterion) {
         data,
         None,
         Some(vec![extra_section]),
-        Some(&defaults::albert_keypair()),
+        Some(defaults::albert_keypair()),
     );
 
     c.bench_function("init_account", |b| {
@@ -410,7 +410,7 @@ fn init_proposal(c: &mut Criterion) {
                                 },
                                 None,
                                 Some(vec![content_section]),
-                                Some(&defaults::albert_keypair()),
+                                Some(defaults::albert_keypair()),
                             )
                         }
                         "complete_proposal" => {
@@ -462,7 +462,7 @@ fn init_proposal(c: &mut Criterion) {
                                 },
                                 None,
                                 Some(vec![content_section, wasm_code_section]),
-                                Some(&defaults::albert_keypair()),
+                                Some(defaults::albert_keypair()),
                             )
                         }
                         _ => panic!("unexpected bench test"),
@@ -491,7 +491,7 @@ fn vote_proposal(c: &mut Criterion) {
         },
         None,
         None,
-        Some(&defaults::albert_keypair()),
+        Some(defaults::albert_keypair()),
     );
 
     let validator_vote = generate_tx(
@@ -504,7 +504,7 @@ fn vote_proposal(c: &mut Criterion) {
         },
         None,
         None,
-        Some(&defaults::validator_keypair()),
+        Some(defaults::validator_keypair()),
     );
 
     for (signed_tx, bench_name) in [delegator_vote, validator_vote]
@@ -586,7 +586,7 @@ fn init_validator(c: &mut Criterion) {
         data,
         None,
         Some(vec![extra_section]),
-        Some(&defaults::albert_keypair()),
+        Some(defaults::albert_keypair()),
     );
 
     c.bench_function("init_validator", |b| {
@@ -607,7 +607,7 @@ fn change_validator_commission(c: &mut Criterion) {
         },
         None,
         None,
-        Some(&defaults::validator_keypair()),
+        Some(defaults::validator_keypair()),
     );
 
     c.bench_function("change_validator_commission", |b| {
@@ -642,7 +642,7 @@ fn unjail_validator(c: &mut Criterion) {
         defaults::validator_address(),
         None,
         None,
-        Some(&defaults::validator_keypair()),
+        Some(defaults::validator_keypair()),
     );
 
     c.bench_function("unjail_validator", |b| {

@@ -1792,8 +1792,8 @@ where
 #[allow(clippy::too_many_arguments)]
 pub fn vp_verify_tx_section_signature<MEM, DB, H, EVAL, CA>(
     env: &VpVmEnv<MEM, DB, H, EVAL, CA>,
-    hash_list_ptr: u64,
-    hash_list_len: u64,
+    hash_ptr: u64,
+    hash_len: u64,
     public_keys_map_ptr: u64,
     public_keys_map_len: u64,
     threshold: u8,
@@ -1807,14 +1807,14 @@ where
     EVAL: VpEvaluator,
     CA: WasmCacheAccess,
 {
-    let (hash_list, gas) = env
+    let (hash, gas) = env
         .memory
-        .read_bytes(hash_list_ptr, hash_list_len as _)
+        .read_bytes(hash_ptr, hash_len as _)
         .map_err(|e| vp_host_fns::RuntimeError::MemoryError(Box::new(e)))?;
 
     let gas_meter = unsafe { env.ctx.gas_meter.get() };
     vp_host_fns::add_gas(gas_meter, gas)?;
-    let hashes = <[Hash; 3]>::try_from_slice(&hash_list)
+    let hash = Hash::try_from_slice(&hash)
         .map_err(vp_host_fns::RuntimeError::EncodingError)?;
 
     let (public_keys_map, gas) = env
@@ -1840,7 +1840,7 @@ where
 
     Ok(HostEnvResult::from(
         tx.verify_section_signatures(
-            &hashes,
+            &hash,
             public_keys_map,
             threshold,
             max_signatures,

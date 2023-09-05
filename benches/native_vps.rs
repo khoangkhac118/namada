@@ -107,7 +107,7 @@ fn governance(c: &mut Criterion) {
                 },
                 None,
                 None,
-                Some(&defaults::albert_keypair()),
+                Some(defaults::albert_keypair()),
             ),
             "validator_vote" => generate_tx(
                 TX_VOTE_PROPOSAL_WASM,
@@ -119,7 +119,7 @@ fn governance(c: &mut Criterion) {
                 },
                 None,
                 None,
-                Some(&defaults::validator_keypair()),
+                Some(defaults::validator_keypair()),
             ),
             "minimal_proposal" => {
                 let content_section = Section::ExtraData(Code::new(vec![]));
@@ -136,7 +136,7 @@ fn governance(c: &mut Criterion) {
                     },
                     None,
                     Some(vec![content_section]),
-                    Some(&defaults::albert_keypair()),
+                    Some(defaults::albert_keypair()),
                 )
             }
             "complete_proposal" => {
@@ -179,7 +179,7 @@ fn governance(c: &mut Criterion) {
                     },
                     None,
                     Some(vec![content_section, wasm_code_section]),
-                    Some(&defaults::albert_keypair()),
+                    Some(defaults::albert_keypair()),
                 )
             }
             _ => panic!("Unexpected bench test"),
@@ -408,7 +408,7 @@ fn vp_multitoken(c: &mut Criterion) {
         },
         None,
         None,
-        Some(&defaults::albert_keypair()),
+        Some(defaults::albert_keypair()),
     );
 
     for (signed_tx, bench_name) in [foreign_key_write, transfer]

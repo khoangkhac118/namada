@@ -1210,7 +1210,9 @@ where
                 // Replay protection check
                 let inner_tx_hash = tx.raw_header_hash();
                 let inner_hash_key =
-                    replay_protection::get_replay_protection_key(inner_tx_hash);
+                    replay_protection::get_replay_protection_key(
+                        &inner_tx_hash,
+                    );
                 if self
                     .wl_storage
                     .storage

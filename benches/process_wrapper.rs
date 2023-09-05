@@ -30,7 +30,7 @@ fn process_tx(c: &mut Criterion) {
         },
         None,
         None,
-        Some(&defaults::albert_keypair()),
+        Some(defaults::albert_keypair()),
     );
 
     tx.update_header(namada::types::transaction::TxType::Wrapper(Box::new(
@@ -41,7 +41,7 @@ fn process_tx(c: &mut Criterion) {
             },
             defaults::albert_keypair().ref_to(),
             0.into(),
-            1000.into(),
+            20_000.into(),
             #[cfg(not(feature = "mainnet"))]
             None,
             None,
