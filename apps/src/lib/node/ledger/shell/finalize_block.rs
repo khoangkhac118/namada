@@ -226,7 +226,9 @@ where
                 #[cfg(not(any(feature = "abciplus", feature = "abcipp")))]
                 if let TxType::Wrapper(wrapper) = &tx_header.tx_type {
                     // Charge fee if wrapper transaction went out of gas or
-                    // failed because of fees
+                    // failed because of fees (also write the wrapper hash to
+                    // storage to prevent replays that would force the fee payer
+                    // to pay more than once)
                     let error_code =
                         ErrorCodes::from_u32(processed_tx.result.code).unwrap();
                     if (error_code == ErrorCodes::TxGasLimit)
@@ -238,7 +240,7 @@ where
                                 tx.get_section(hash)
                                     .map(|section| {
                                         if let Section::MaspTx(transaction) =
-                                            section
+                                            section.as_ref()
                                         {
                                             Some(transaction.to_owned())
                                         } else {
@@ -251,27 +253,26 @@ where
                         #[cfg(not(feature = "mainnet"))]
                         let has_valid_pow =
                             self.invalidate_pow_solution_if_valid(wrapper);
-                        if let Err(msg) = protocol::charge_fee(
+                        if let Err(msg) = protocol::apply_wrapper_tx(
                             wrapper,
                             masp_transaction,
+                            &processed_tx.tx,
                             ShellParams::new(
-                                TxGasMeter::new_from_sub_limit(u64::MAX),
+                                &mut TxGasMeter::new_from_sub_limit(
+                                    u64::MAX.into(),
+                                ),
                                 &mut self.wl_storage,
                                 &mut self.vp_wasm_cache,
                                 &mut self.tx_wasm_cache,
                             ),
+                            Some(&native_block_proposer_address),
                             #[cfg(not(feature = "mainnet"))]
                             has_valid_pow,
-                            Some(&native_block_proposer_address),
-                            &mut BTreeSet::default(),
                         ) {
                             self.wl_storage.write_log.drop_tx();
                             tracing::error!(
                                 "Rejected wrapper tx {} could not pay fee: {}",
-                                Hash::sha256(
-                                    tx::try_from(processed_tx.as_ref())
-                                        .unwrap()
-                                ),
+                                hash::Hash::sha256(tx.header_hash()),
                                 msg
                             )
                         }
