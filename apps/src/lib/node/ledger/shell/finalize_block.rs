@@ -333,6 +333,17 @@ where
                                 "Tx with hash {} was un-decryptable",
                                 tx_in_queue.tx.header_hash()
                             );
+                            // Remove inner tx hash from storage
+                            let inner_tx_hash =
+                                replay_protection::get_replay_protection_key(
+                                    &tx_in_queue
+                                        .tx
+                                        .update_header(TxType::Raw)
+                                        .header_hash(),
+                                );
+                            self.wl_storage.delete(&inner_tx_hash).expect(
+                                "Error while deleting tx hash from storage",
+                            );
                             event["info"] = "Transaction is invalid.".into();
                             event["log"] =
                                 "Transaction could not be decrypted.".into();
