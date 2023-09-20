@@ -79,6 +79,8 @@ pub struct VpsResult {
     pub gas_used: VpsGas,
     /// Errors occurred in any of the VPs, if any
     pub errors: Vec<(Address, String)>,
+    /// Sentinel for invalid signatures
+    pub invalid_sig: bool,
 }
 
 impl fmt::Display for TxResult {

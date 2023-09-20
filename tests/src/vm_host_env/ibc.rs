@@ -156,6 +156,7 @@ pub fn validate_ibc_vp_from_tx<'a>(
         VpGasMeter::new_from_tx_meter(&TxGasMeter::new_from_sub_limit(
             1_000_000.into(),
         )),
+        false,
         &keys_changed,
         &verifiers,
         vp_wasm_cache,
@@ -194,6 +195,7 @@ pub fn validate_multitoken_vp_from_tx<'a>(
         VpGasMeter::new_from_tx_meter(&TxGasMeter::new_from_sub_limit(
             1_000_000.into(),
         )),
+        false,
         &keys_changed,
         &verifiers,
         vp_wasm_cache,

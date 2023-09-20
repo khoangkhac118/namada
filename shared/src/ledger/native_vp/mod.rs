@@ -65,6 +65,9 @@ where
     pub iterators: RefCell<PrefixIterators<'a, DB>>,
     /// VP gas meter.
     pub gas_meter: RefCell<VpGasMeter>,
+    /// Invalid sig flag. This is not strictly required for native vps but it's
+    /// needed in case of a call to `eval`
+    pub invalid_sig: RefCell<bool>,
     /// Read-only access to the storage.
     pub storage: &'a Storage<DB, H>,
     /// Read-only access to the write log.
@@ -126,6 +129,7 @@ where
         tx: &'a Tx,
         tx_index: &'a TxIndex,
         gas_meter: VpGasMeter,
+        invalid_sig: bool,
         keys_changed: &'a BTreeSet<Key>,
         verifiers: &'a BTreeSet<Address>,
         #[cfg(feature = "wasm-runtime")]
@@ -135,6 +139,7 @@ where
             address,
             iterators: RefCell::new(PrefixIterators::default()),
             gas_meter: RefCell::new(gas_meter),
+            invalid_sig: RefCell::new(invalid_sig),
             storage,
             write_log,
             tx,
@@ -488,6 +493,7 @@ where
                 self.storage,
                 self.write_log,
                 &mut self.gas_meter.borrow_mut(),
+                &mut self.invalid_sig.borrow_mut(),
                 self.tx,
                 self.tx_index,
                 &mut iterators,
