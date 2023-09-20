@@ -60,7 +60,7 @@ mod ibc_rs_conversion {
     use std::str::FromStr;
 
     use borsh::{BorshDeserialize, BorshSerialize};
-    use data_encoding::HEXLOWER;
+    use data_encoding::HEXUPPER;
     use thiserror::Error;
 
     use super::{IbcEvent, IbcShieldedTransfer};
@@ -107,7 +107,7 @@ mod ibc_rs_conversion {
         fn from(shielded: IbcShieldedTransfer) -> Self {
             let bytes =
                 shielded.try_to_vec().expect("Encoding shouldn't failed");
-            HEXLOWER.encode(&bytes).into()
+            HEXUPPER.encode(&bytes).into()
         }
     }
 
@@ -115,7 +115,7 @@ mod ibc_rs_conversion {
         type Error = Error;
 
         fn try_from(memo: Memo) -> Result<Self> {
-            let bytes = HEXLOWER
+            let bytes = HEXUPPER
                 .decode(memo.as_ref().as_bytes())
                 .map_err(Error::DecodingHex)?;
             Self::try_from_slice(&bytes)
@@ -135,7 +135,7 @@ mod ibc_rs_conversion {
             event.attributes.get("success") == Some(&"true".to_string());
         let receiver = event.attributes.get("receiver");
         let is_shielded = if let Some(receiver) = receiver {
-            PaymentAddress::from_str(&receiver).is_ok()
+            PaymentAddress::from_str(receiver).is_ok()
         } else {
             false
         };
