@@ -333,8 +333,6 @@ where
                                 "Tx with hash {} was un-decryptable",
                                 tx_in_queue.tx.header_hash()
                             );
-                            // FIXME: shared function to remove hash from
-                            // storage
                             // Remove inner tx hash from storage
                             let inner_tx_hash =
                                 replay_protection::get_replay_protection_key(
@@ -455,6 +453,8 @@ where
                 },
             };
 
+            let mut invalid_sig_sentinel = false;
+
             match protocol::dispatch_tx(
                 tx,
                 processed_tx.tx.as_ref(),
@@ -464,6 +464,7 @@ where
                         .expect("transaction index out of bounds"),
                 ),
                 &mut tx_gas_meter,
+                &mut invalid_sig_sentinel,
                 &mut self.wl_storage,
                 &mut self.vp_wasm_cache,
                 &mut self.tx_wasm_cache,
@@ -536,7 +537,7 @@ where
                         );
 
                         if let Some(hash) = decrypted_tx_hash {
-                            if result.vps_result.invalid_sig {
+                            if invalid_sig_sentinel {
                                 // Invalid signature was found, remove the tx
                                 // hash from storage to allow replay
                                 let tx_hash_key =
@@ -563,23 +564,20 @@ where
                         tx_event["hash"],
                         msg
                     );
-                    stats.increment_errored_txs();
 
-                    self.wl_storage.drop_tx();
-                    // FIXME: should check the invalid sig also here? Probably
-                    // yes, if the signature is invalid the hash should not be
-                    // stored regardless of the reason of the crash
-                    // FIXME: so I need to notify the invalid sig in some way
-                    // even i ncase of a failure, maybe I should put the flag
-                    // somewhere else FIXME: there's a
-                    // problem. At the moment an error inone VP short circuits
-                    // the evaluation, but I cannot do that anymore, I need to
-                    // run all of the vps to see if there's an invalid signature
-                    // FIXME: but in theory I can't run the VPs if I'm going out
-                    // of gas, so it seems like if I go out of gas I can short
-                    // circuit (which causes the removal of the hash any way),
-                    // if the error is because of something else I do NOT
-                    // short-sircuit
+                    if let Some(hash) = decrypted_tx_hash {
+                        if invalid_sig_sentinel {
+                            // Invalid signature was found, remove the tx
+                            // hash from storage to allow replay
+                            let tx_hash_key =
+                                replay_protection::get_replay_protection_key(
+                                    &hash,
+                                );
+                            self.wl_storage.delete(&tx_hash_key).expect(
+                                "Error while deleting tx hash key from storage",
+                            );
+                        }
+                    }
 
                     // If transaction type is Decrypted and failed because of
                     // out of gas, remove its hash from storage to allow
@@ -597,6 +595,9 @@ where
                             );
                         }
                     }
+
+                    stats.increment_errored_txs();
+                    self.wl_storage.drop_tx();
 
                     tx_event["gas_used"] =
                         tx_gas_meter.get_tx_consumed_gas().to_string();
@@ -2177,9 +2178,11 @@ mod test_finalize_block {
         // won't receive votes from TM since we receive votes at a 1-block
         // delay, so votes will be empty here
         next_block_for_inflation(&mut shell, pkh1.clone(), vec![], None);
-        assert!(rewards_accumulator_handle()
-            .is_empty(&shell.wl_storage)
-            .unwrap());
+        assert!(
+            rewards_accumulator_handle()
+                .is_empty(&shell.wl_storage)
+                .unwrap()
+        );
 
         // FINALIZE BLOCK 2. Tell Namada that val1 is the block proposer.
         // Include votes that correspond to block 1. Make val2 the next block's
@@ -2189,9 +2192,11 @@ mod test_finalize_block {
         assert!(rewards_prod_2.is_empty(&shell.wl_storage).unwrap());
         assert!(rewards_prod_3.is_empty(&shell.wl_storage).unwrap());
         assert!(rewards_prod_4.is_empty(&shell.wl_storage).unwrap());
-        assert!(!rewards_accumulator_handle()
-            .is_empty(&shell.wl_storage)
-            .unwrap());
+        assert!(
+            !rewards_accumulator_handle()
+                .is_empty(&shell.wl_storage)
+                .unwrap()
+        );
         // Val1 was the proposer, so its reward should be larger than all
         // others, which should themselves all be equal
         let acc_sum = get_rewards_sum(&shell.wl_storage);
@@ -2305,9 +2310,11 @@ mod test_finalize_block {
                 None,
             );
         }
-        assert!(rewards_accumulator_handle()
-            .is_empty(&shell.wl_storage)
-            .unwrap());
+        assert!(
+            rewards_accumulator_handle()
+                .is_empty(&shell.wl_storage)
+                .unwrap()
+        );
         let rp1 = rewards_prod_1
             .get(&shell.wl_storage, &Epoch::default())
             .unwrap()
@@ -2397,22 +2404,26 @@ mod test_finalize_block {
         assert!(shell.shell.wl_storage.has_key(&wrapper_hash_key).unwrap());
         assert!(shell.shell.wl_storage.has_key(&decrypted_hash_key).unwrap());
         // Check that non of the hashes is present in the merkle tree
-        assert!(!shell
-            .shell
-            .wl_storage
-            .storage
-            .block
-            .tree
-            .has_key(&wrapper_hash_key)
-            .unwrap());
-        assert!(!shell
-            .shell
-            .wl_storage
-            .storage
-            .block
-            .tree
-            .has_key(&decrypted_hash_key)
-            .unwrap());
+        assert!(
+            !shell
+                .shell
+                .wl_storage
+                .storage
+                .block
+                .tree
+                .has_key(&wrapper_hash_key)
+                .unwrap()
+        );
+        assert!(
+            !shell
+                .shell
+                .wl_storage
+                .storage
+                .block
+                .tree
+                .has_key(&decrypted_hash_key)
+                .unwrap()
+        );
     }
 
     /// Test that if a decrypted transaction fails because of out-of-gas, its
@@ -2488,10 +2499,12 @@ mod test_finalize_block {
         let code = event.attributes.get("code").expect("Testfailed").as_str();
         assert_eq!(code, String::from(ErrorCodes::WasmRuntimeError).as_str());
 
-        assert!(!shell
-            .wl_storage
-            .has_key(&inner_hash_key)
-            .expect("Test failed"))
+        assert!(
+            !shell
+                .wl_storage
+                .has_key(&inner_hash_key)
+                .expect("Test failed")
+        )
     }
 
     #[test]
@@ -2553,14 +2566,18 @@ mod test_finalize_block {
         let code = event.attributes.get("code").expect("Testfailed").as_str();
         assert_eq!(code, String::from(ErrorCodes::InvalidTx).as_str());
 
-        assert!(shell
-            .wl_storage
-            .has_key(&wrapper_hash_key)
-            .expect("Test failed"));
-        assert!(!shell
-            .wl_storage
-            .has_key(&inner_hash_key)
-            .expect("Test failed"))
+        assert!(
+            shell
+                .wl_storage
+                .has_key(&wrapper_hash_key)
+                .expect("Test failed")
+        );
+        assert!(
+            !shell
+                .wl_storage
+                .has_key(&inner_hash_key)
+                .expect("Test failed")
+        )
     }
 
     // Test that if the fee payer doesn't have enough funds for fee payment the
@@ -2847,9 +2864,11 @@ mod test_finalize_block {
                 .unwrap(),
             Some(ValidatorState::Consensus)
         );
-        assert!(enqueued_slashes_handle()
-            .at(&Epoch::default())
-            .is_empty(&shell.wl_storage)?);
+        assert!(
+            enqueued_slashes_handle()
+                .at(&Epoch::default())
+                .is_empty(&shell.wl_storage)?
+        );
         assert_eq!(
             get_num_consensus_validators(&shell.wl_storage, Epoch::default())
                 .unwrap(),
@@ -2868,17 +2887,21 @@ mod test_finalize_block {
                     .unwrap(),
                 Some(ValidatorState::Jailed)
             );
-            assert!(enqueued_slashes_handle()
-                .at(&epoch)
-                .is_empty(&shell.wl_storage)?);
+            assert!(
+                enqueued_slashes_handle()
+                    .at(&epoch)
+                    .is_empty(&shell.wl_storage)?
+            );
             assert_eq!(
                 get_num_consensus_validators(&shell.wl_storage, epoch).unwrap(),
                 5_u64
             );
         }
-        assert!(!enqueued_slashes_handle()
-            .at(&processing_epoch)
-            .is_empty(&shell.wl_storage)?);
+        assert!(
+            !enqueued_slashes_handle()
+                .at(&processing_epoch)
+                .is_empty(&shell.wl_storage)?
+        );
 
         // Advance to the processing epoch
         loop {
@@ -2901,9 +2924,11 @@ mod test_finalize_block {
                 // println!("Reached processing epoch");
                 break;
             } else {
-                assert!(enqueued_slashes_handle()
-                    .at(&shell.wl_storage.storage.block.epoch)
-                    .is_empty(&shell.wl_storage)?);
+                assert!(
+                    enqueued_slashes_handle()
+                        .at(&shell.wl_storage.storage.block.epoch)
+                        .is_empty(&shell.wl_storage)?
+                );
                 let stake1 = read_validator_stake(
                     &shell.wl_storage,
                     &params,
@@ -3449,13 +3474,15 @@ mod test_finalize_block {
             )
             .unwrap();
         assert_eq!(last_slash, Some(Epoch(4)));
-        assert!(namada_proof_of_stake::is_validator_frozen(
-            &shell.wl_storage,
-            &val1.address,
-            current_epoch,
-            &params
-        )
-        .unwrap());
+        assert!(
+            namada_proof_of_stake::is_validator_frozen(
+                &shell.wl_storage,
+                &val1.address,
+                current_epoch,
+                &params
+            )
+            .unwrap()
+        );
         assert!(
             namada_proof_of_stake::validator_slashes_handle(&val1.address)
                 .is_empty(&shell.wl_storage)

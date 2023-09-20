@@ -181,6 +181,7 @@ where
     let mut data = protocol::apply_wasm_tx(
         tx,
         &TxIndex(0),
+        &mut false,
         ShellParams::new(
             &mut tx_gas_meter,
             &mut temp_wl_storage,

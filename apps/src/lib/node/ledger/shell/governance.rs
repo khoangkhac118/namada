@@ -280,6 +280,7 @@ where
                   * need it here. */
             TxIndex::default(),
             &mut TxGasMeter::new_from_sub_limit(u64::MAX.into()), /* No gas limit for governance proposal */
+            &mut false,
             &mut shell.wl_storage,
             &mut shell.vp_wasm_cache,
             &mut shell.tx_wasm_cache,
