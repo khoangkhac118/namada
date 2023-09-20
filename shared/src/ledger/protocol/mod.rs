@@ -1038,6 +1038,7 @@ where
 
                     accepted
                 }
+                Address::Foreign(_) => Ok(true),
             };
 
             // Returning error from here will short-circuit the VP parallel

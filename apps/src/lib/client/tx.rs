@@ -13,6 +13,7 @@ use namada::core::ledger::governance::cli::offline::{
 use namada::core::ledger::governance::cli::onchain::{
     DefaultProposal, PgfFundingProposal, PgfStewardProposal, ProposalVote,
 };
+use namada::ibc::applications::transfer::Memo;
 use namada::ledger::rpc::{TxBroadcastData, TxResponse};
 use namada::ledger::wallet::{Wallet, WalletUtils};
 use namada::ledger::{masp, pos, signing, tx};
@@ -1466,4 +1467,33 @@ pub async fn submit_tx(
     to_broadcast: TxBroadcastData,
 ) -> Result<TxResponse, error::Error> {
     tx::submit_tx(client, to_broadcast).await
+}
+
+pub async fn gen_ibc_shielded_transfer<C>(
+    client: &C,
+    ctx: &mut Context,
+    args: args::GenIbcShieldedTransafer,
+) -> Result<(), error::Error>
+where
+    C: namada::ledger::queries::Client + Sync,
+    C::Error: std::fmt::Display,
+{
+    if let Some(shielded_transfer) =
+        tx::gen_ibc_shielded_transfer(client, &mut ctx.shielded, args.clone())
+            .await?
+    {
+        let tx_id = shielded_transfer.masp_tx.txid().to_string();
+        let filename = format!("ibc_shielded_transfer_{}.memo", tx_id,);
+        let output_path = match &args.output_folder {
+            Some(path) => path.join(filename),
+            None => filename.into(),
+        };
+        let out = File::create(&output_path)
+            .expect("Should be able to create the out file.");
+        serde_json::to_writer_pretty(out, &Memo::from(shielded_transfer))
+            .expect("IBC memo should be deserializable.");
+    } else {
+        eprintln!("No shielded transfer for this IBC transfer.")
+    }
+    Ok(())
 }

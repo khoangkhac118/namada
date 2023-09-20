@@ -163,7 +163,7 @@ pub struct TxIbcTransfer<C: NamadaTypes = SdkTypes> {
     pub source: C::Address,
     /// Transfer target address
     pub receiver: String,
-    /// Transferred token addres    s
+    /// Transferred token address
     pub token: C::Address,
     /// Transferred token amount
     pub amount: InputAmount,
@@ -875,4 +875,27 @@ pub struct ValidatorSetUpdateRelay<C: NamadaTypes = SdkTypes> {
     /// Safe mode overrides keyboard interrupt signals, to ensure
     /// Ethereum transfers aren't canceled midway through.
     pub safe_mode: bool,
+}
+
+/// IBC shielded transfer generation arguments
+#[derive(Clone, Debug)]
+pub struct GenIbcShieldedTransafer<C: NamadaTypes = SdkTypes> {
+    /// The query parameters.
+    pub query: Query<C>,
+    /// The output directory path to where serialize the data
+    pub output_folder: Option<PathBuf>,
+    /// The foreign sender address
+    pub sender: String,
+    /// The target address
+    pub target: C::TransferTarget,
+    /// The token address
+    pub token: C::Address,
+    /// The trace path of the token
+    pub trace_path: Option<String>,
+    /// Transferred token amount
+    pub amount: InputAmount,
+    /// Port ID via which the token is received
+    pub port_id: PortId,
+    /// Channel ID via which the token is received
+    pub channel_id: ChannelId,
 }

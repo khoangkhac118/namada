@@ -624,6 +624,22 @@ impl<IO> CliApi<IO> {
                         let args = args.to_sdk(&mut ctx);
                         tx::sign_tx(&client, &mut ctx, args).await?;
                     }
+                    Sub::GenIbcShieldedTransafer(GenIbcShieldedTransafer(
+                        mut args,
+                    )) => {
+                        let client = client.unwrap_or_else(|| {
+                            C::from_tendermint_address(
+                                &mut args.query.ledger_address,
+                            )
+                        });
+                        client
+                            .wait_until_node_is_synced()
+                            .await
+                            .proceed_or_else(error)?;
+                        let args = args.to_sdk(&mut ctx);
+                        tx::gen_ibc_shielded_transfer(&client, &mut ctx, args)
+                            .await?;
+                    }
                 }
             }
             cli::NamadaClient::WithoutContext(cmd, global_args) => match cmd {
