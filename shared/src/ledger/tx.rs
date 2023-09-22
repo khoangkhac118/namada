@@ -48,7 +48,9 @@ use crate::ibc::Height as IbcHeight;
 use crate::ledger::args::{self, InputAmount};
 use crate::ledger::ibc::storage::ibc_denom_key;
 use crate::ledger::masp::TransferErr::Build;
-use crate::ledger::masp::{ShieldedContext, ShieldedTransfer, ShieldedUtils};
+use crate::ledger::masp::{
+    make_asset_type, ShieldedContext, ShieldedTransfer, ShieldedUtils,
+};
 use crate::ledger::rpc::{
     self, format_denominated_amount, validate_amount, TxBroadcastData,
     TxResponse,
@@ -1960,7 +1962,7 @@ pub async fn gen_ibc_shielded_transfer<
         .await
         .expect("expected to validate amount");
 
-    let shielded = shielded
+    let shielded_transfer = shielded
         .gen_shielded_transfer(
             client,
             &TransferSource::Address(source.clone()),
@@ -1970,18 +1972,31 @@ pub async fn gen_ibc_shielded_transfer<
         )
         .await
         .map_err(|err| TxError::MaspError(err.to_string()))?;
+
     let transfer = token::Transfer {
         source: source.clone(),
         target: masp(),
-        token,
+        token: token.clone(),
         amount: validated_amount,
         key,
         shielded: None,
     };
-    if let Some(shielded) = shielded {
+    if let Some(shielded_transfer) = shielded_transfer {
+        // TODO: Workaround for decoding the asset_type later
+        let mut asset_types = Vec::new();
+        for denom in MaspDenom::iter() {
+            let epoch = shielded_transfer.epoch;
+            let asset_type = make_asset_type(Some(epoch), &token, denom)?;
+            shielded
+                .asset_types
+                .insert(asset_type, (token.clone(), denom, epoch));
+            asset_types.push(asset_type);
+        }
+        let _ = shielded.save().await;
+
         Ok(Some(IbcShieldedTransfer {
             transfer,
-            masp_tx: shielded.masp_tx,
+            masp_tx: shielded_transfer.masp_tx,
         }))
     } else {
         Ok(None)
