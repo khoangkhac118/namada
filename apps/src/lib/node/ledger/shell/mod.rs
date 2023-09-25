@@ -2152,12 +2152,10 @@ mod abciplus_mempool_tests {
         let ethereum_event_0 = EthereumEvent::TransfersToNamada {
             nonce: 0u64.into(),
             transfers: vec![],
-            valid_transfers_map: vec![],
         };
         let ethereum_event_1 = EthereumEvent::TransfersToNamada {
             nonce: 1u64.into(),
             transfers: vec![],
-            valid_transfers_map: vec![],
         };
         shell
             .wl_storage
