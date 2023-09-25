@@ -191,7 +191,6 @@ mod tests {
         let event = EthereumEvent::TransfersToNamada {
             nonce: 0.into(),
             transfers: vec![],
-            valid_transfers_map: vec![],
         };
         let keys = vote_tallies::Keys::from(&event);
         let tally = Tally {
@@ -240,7 +239,6 @@ mod tests {
         let event = EthereumEvent::TransfersToNamada {
             nonce: 0.into(),
             transfers: vec![],
-            valid_transfers_map: vec![],
         };
         let keys = vote_tallies::Keys::from(&event);
         let tally = Tally {
